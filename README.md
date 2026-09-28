@@ -41,6 +41,12 @@ Every scan is saved automatically to `chrome.storage.local` on your device. Resc
 
 ![SEO Lens history](screenshots/history.png)
 
+### Real-world example: flowlancerr.com
+
+Audited live with v0.6.1. **Score 85** (2 issues, 7 warnings, 16 passed). Real findings included three 404 links (`/feature/dashboard`, `/feature/clients`, `/feature/projects`), a 3.86 MB page weight, 13 images missing alt text, and the top keyword "invoices" missing from the title.
+
+![SEO Lens auditing flowlancerr.com](screenshots/flowlancerr-overview.png)
+
 ## Install
 
 **Chrome / Edge / Brave**
