@@ -1,6 +1,6 @@
 # SEO Lens
 
-![version](https://img.shields.io/badge/version-0.5.4-blue)
+![version](https://img.shields.io/badge/version-0.6.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![manifest](https://img.shields.io/badge/manifest-V3-orange)
 ![privacy](https://img.shields.io/badge/tracking-zero-red)
@@ -70,6 +70,11 @@ The panel is vanilla JS + CSS in a Shadow DOM (no frameworks, no build step). Ed
 - `test-fixture.html` - local test page (not shipped in releases)
 
 ## Changelog
+
+**v0.6.0**
+- Full UI redesign in an audit-card style: 2x2 stat grid (Score / Issues / Warnings / Passed), underline tab strip, status-icon check rows, code snippet boxes, and a black Copy report button
+- New wide-panel toggle in the header
+- Fix suggestions now carry their severity, shown as red or amber icons
 
 **v0.5.4**
 - Removed every em dash from UI strings and docs

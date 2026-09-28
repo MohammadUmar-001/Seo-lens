@@ -517,6 +517,7 @@
     if (d.meta.robots && /noindex/i.test(d.meta.robots)) {
       out.push({
         title: 'Remove noindex, this page is invisible to Google',
+        level: 'fail',
         why: 'The robots meta tag tells search engines to exclude this page from results. Only keep noindex on pages you truly want hidden (admin, thank-you pages).',
         snippet: '<meta name="robots" content="index, follow">'
       });
@@ -524,12 +525,14 @@
     if (!d.title && d.h1Text) {
       out.push({
         title: 'Add a missing page title',
+        level: 'fail',
         why: 'Search engines invent their own title when none exists, usually a bad one.',
         snippet: '<title>' + truncate(d.h1Text + ' | ' + d.host, 60) + '</title>'
       });
     } else if (d.title.length > 60) {
       out.push({
         title: 'Shorten the title tag',
+        level: 'warn',
         why: 'Long titles get cut off in search results, hiding your message.',
         snippet: '<title>' + truncate(d.title, 60) + '</title>'
       });
@@ -543,6 +546,7 @@
       if (paras[0]) {
         out.push({
           title: 'Add a meta description',
+        level: 'warn',
           why: 'This snippet is what searchers read before clicking.',
           snippet: '<meta name="description" content="' + truncate(paras[0], 155).replace(/"/g, '&quot;') + '">'
         });
@@ -553,6 +557,7 @@
       if (!p.inTitle && d.title) {
         out.push({
           title: 'Work "' + p.keyword + '" into the title',
+        level: 'warn',
           why: 'Your top keyword "' + p.keyword + '" appears nowhere in the title.',
           snippet: '<title>' + truncate(cap(p.keyword) + ', ' + d.title, 60) + '</title>'
         });
@@ -561,6 +566,7 @@
     if (d.ogMissing && d.ogMissing.length) {
       out.push({
         title: 'Complete your Open Graph tags',
+        level: 'warn',
         why: 'Missing tags mean ugly link previews when shared on social.',
         snippet: d.ogMissing.map(function (t) {
           var val = t === 'og:title' ? d.title : (t === 'og:description' ? truncate(d.meta.description, 155) : d.url);
@@ -578,6 +584,7 @@
       imgLines.push('Resize to displayed dimensions, or serve responsive versions with srcset.');
       out.push({
         title: 'Resize ' + d.images.oversizedCount + ' oversized image(s)',
+        level: 'warn',
         why: 'Serving images larger than displayed wastes bandwidth and slows the page.',
         snippet: imgLines.join('\n')
       });
@@ -594,6 +601,7 @@
       weightLines.push('Compress images (WebP/AVIF), defer non-critical JS, lazy-load below-fold media.');
       out.push({
         title: 'Slim the page down (' + (d.performance.bytes / 1048576).toFixed(1) + ' MB)',
+        level: 'warn',
         why: 'Heavy pages hurt rankings and conversions.',
         snippet: weightLines.join('\n')
       });
@@ -602,6 +610,7 @@
     if (bl && bl.checkable && bl.broken.length) {
       out.push({
         title: 'Fix ' + bl.broken.length + ' broken link(s)',
+        level: 'fail',
         why: 'Dead links hurt user trust and crawl efficiency.',
         snippet: bl.broken.slice(0, 8).map(function (b) { return b.url + ' (HTTP ' + b.status + ')'; }).join('\n')
       });

@@ -52,19 +52,20 @@
     '<div class="sl-root">' +
     '<div id="app">' +
     '  <header>' +
-    '    <div id="score-wrap">' +
-    '      <svg id="score-ring" viewBox="0 0 72 72" width="72" height="72">' +
-    '        <circle cx="36" cy="36" r="30" class="ring-bg"/>' +
-    '        <circle cx="36" cy="36" r="30" class="ring-fg" id="ring-fg"/>' +
-    '        <text x="36" y="42" text-anchor="middle" id="score-text">–</text>' +
-    '      </svg>' +
-    '      <div id="score-meta">' +
-    '        <div id="score-label">SEO score</div>' +
-    '        <div id="page-title" title=""></div>' +
-    '        <div id="page-url"></div>' +
+    '    <div class="brand-row">' +
+    '      <div class="brand"><span class="brand-mark">\u25c9</span>SEO Lens <span class="ver">v0.6.0</span></div>' +
+    '      <div class="brand-actions">' +
+    '        <button id="sl-expand" title="Toggle wide panel">\u2922</button>' +
+    '        <button id="sl-close" title="Close panel">\u00d7</button>' +
     '      </div>' +
     '    </div>' +
-    '    <button id="sl-close" title="Close panel">×</button>' +
+    '    <div class="page-context"><span id="page-url"></span><span id="page-title" title=""></span></div>' +
+    '    <div class="stat-grid">' +
+    '      <div class="stat"><span class="stat-label">Score</span><span class="stat-num" id="stat-score">\u2013</span></div>' +
+    '      <div class="stat"><span class="stat-label">Issues</span><span class="stat-ico bad">\u2717</span><span class="stat-num" id="stat-fail">0</span></div>' +
+    '      <div class="stat"><span class="stat-label">Warnings</span><span class="stat-ico warn">\u26a0</span><span class="stat-num" id="stat-warn">0</span></div>' +
+    '      <div class="stat"><span class="stat-label">Passed</span><span class="stat-ico ok">\u2713</span><span class="stat-num" id="stat-pass">0</span></div>' +
+    '    </div>' +
     '  </header>' +
     '  <div class="tabs-wrap">' +
     '    <button class="tabs-arrow" id="tabs-prev" aria-label="Scroll tabs left" hidden>&#8249;</button>' +
@@ -97,11 +98,8 @@
     '    <section id="tab-history" class="tab-panel"></section>' +
     '  </main>' +
     '  <footer>' +
-    '    <span>SEO Lens v0.5.4</span>' +
-    '    <span class="export-btns">' +
-    '      <button id="btn-copy" title="Copy report as Markdown">Copy report</button>' +
-    '      <button id="btn-download" title="Download report as Markdown file">Download .md</button>' +
-    '    </span>' +
+    '    <button id="btn-copy" class="btn-primary" title="Copy report as Markdown">Copy report</button>' +
+    '    <button id="btn-download" class="btn-ghost" title="Download report as Markdown file">Download .md</button>' +
     '  </footer>' +
     '</div>' +
     '<div id="status"></div>' +
@@ -252,6 +250,7 @@
     applyCss(cssText);
 
     el('sl-close').addEventListener('click', function () { hostEl.remove(); });
+    el('sl-expand').addEventListener('click', function () { el('app').classList.toggle('wide'); });
     wireTabs();
     wireTabArrows();
     el('btn-copy').addEventListener('click', copyReport);
@@ -326,12 +325,19 @@
   }
 
   function render(data) {
-    var C = 188.5;
-    var ring = el('ring-fg');
-    ring.style.strokeDashoffset = String(C - (C * data.score) / 100);
-    ring.style.stroke = ringColor(data.score);
-    el('score-text').textContent = data.score;
-    el('page-title').textContent = data.title || '(no title)';
+    var nPass = 0, nWarn = 0, nFail = 0;
+    (data.checks || []).forEach(function (c) {
+      if (c.status === 'pass') nPass++;
+      else if (c.status === 'warn') nWarn++;
+      else if (c.status === 'fail') nFail++;
+    });
+    var scoreEl = el('stat-score');
+    scoreEl.textContent = data.score;
+    scoreEl.style.color = ringColor(data.score);
+    el('stat-fail').textContent = nFail;
+    el('stat-warn').textContent = nWarn;
+    el('stat-pass').textContent = nPass;
+    el('page-title').textContent = data.title ? ' \u00b7 ' + data.title : '';
     el('page-title').title = data.title || '';
     try {
       el('page-url').textContent = new URL(data.url).hostname;
@@ -363,7 +369,7 @@
       }
     }
     el('tab-overview').innerHTML = info + data.checks.map(function (c) {
-      return '<div class="check"><span class="dot ' + c.status + '"></span>' +
+      return '<div class="check-card"><span class="st-ico ' + statusClass(c.status) + '">' + statusGlyph(c.status) + '</span>' +
         '<div><div class="label">' + escapeHtml(c.label) + '</div>' +
         '<div class="detail">' + escapeHtml(c.detail) + '</div></div></div>';
     }).join('') +
@@ -382,14 +388,15 @@
   function renderSerp(data) {
     var s = data.serp;
     var warns = '';
-    if (!s.title) warns += '<div class="warn-line">No title, so Google will invent one.</div>';
-    else if (s.titleTruncated) warns += '<div class="warn-line">Title is ' + s.titleLen + ' characters, likely truncated in results.</div>';
-    if (!s.description) warns += '<div class="warn-line">No meta description, so Google will pick its own snippet.</div>';
-    else if (s.descTruncated) warns += '<div class="warn-line">Description is ' + s.descLen + ' characters, likely truncated.</div>';
+    function wl(t) { return '<div class="warn-line"><span class="st-ico warn">⚠</span><span>' + t + '</span></div>'; }
+    if (!s.title) warns += wl('No title, so Google will invent one.');
+    else if (s.titleTruncated) warns += wl('Title is ' + s.titleLen + ' characters, likely truncated in results.');
+    if (!s.description) warns += wl('No meta description, so Google will pick its own snippet.');
+    else if (s.descTruncated) warns += wl('Description is ' + s.descLen + ' characters, likely truncated.');
     el('tab-serp').innerHTML =
       '<div class="section-label">Desktop preview</div>' + serpCard(s, false) +
       '<div class="section-label">Mobile preview</div>' + serpCard(s, true) +
-      (warns || '<div class="ok-line">Title and description lengths look good.</div>');
+      (warns || '<div class="ok-line"><span class="st-ico ok">✓</span><span>Title and description lengths look good.</span></div>');
   }
 
   function renderKeywords(data) {
@@ -423,8 +430,8 @@
         ];
         html += '<div class="place-kw">&ldquo;' + escapeHtml(p.keyword) + '&rdquo;</div>' +
           rows.map(function (r) {
-            return '<div class="place-row"><span class="place-' + (r[1] ? 'yes">✓' : 'no">✗') +
-              '</span> ' + escapeHtml(r[0]) + '</div>';
+            return '<div class="place-row"><span class="st-ico ' + (r[1] ? 'ok">✓' : 'bad">✗') +
+              '</span><span>' + escapeHtml(r[0]) + '</span></div>';
           }).join('');
       });
     }
@@ -455,20 +462,20 @@
       ['TTFB', fmtSecs(p.ttfb), 'Time to First Byte'],
       ['Load', fmtSecs(p.pageLoad), 'Full page load']
     ];
-    el('tab-perf').innerHTML = '<div class="perf-grid">' +
+    el('tab-perf').innerHTML = '<div class="stat-grid">' +
       cards.map(function (c) {
-        return '<div class="perf-card"><div class="perf-val">' + escapeHtml(c[1]) +
-          '</div><div class="perf-name">' + escapeHtml(c[0]) + '</div><div class="perf-sub">' +
-          escapeHtml(c[2]) + '</div></div>';
+        return '<div class="stat"><span class="stat-label">' + escapeHtml(c[0]) + '</span>' +
+          '<span class="stat-num sm">' + escapeHtml(String(c[1])) + '</span><span class="stat-sub">' +
+          escapeHtml(c[2]) + '</span></div>';
       }).join('') + '</div>' +
       kv('Data transferred', fmtBytes(p.bytes)) +
       kv('Requests', p.requests) +
       kv('DOM ready', fmtSecs(p.domContentLoaded)) +
       kv('Long tasks (>50ms)', p.longTasks) +
-      '<div class="psi-row"><div class="section-label">Deep analysis</div>' +
-      '<div class="psi-btns"><button class="copy-btn" id="btn-psi-mobile">PageSpeed Insights: Mobile</button> ' +
-      '<button class="copy-btn" id="btn-psi-desktop">PageSpeed Insights: Desktop</button></div>' +
-      '<div class="note">Opens Google PageSpeed Insights for this exact URL in a new tab.</div></div>' +
+      '<div class="section-label">Deep analysis</div>' +
+      '<div class="hl-row"><button class="btn-sm" id="btn-psi-mobile">PageSpeed Insights: Mobile</button>' +
+      '<button class="btn-sm" id="btn-psi-desktop">PageSpeed Insights: Desktop</button></div>' +
+      '<div class="note">Opens Google PageSpeed Insights for this exact URL in a new tab.</div>' +
       '<div class="note">Transfer size excludes cross-origin resources without timing permission, treat as a lower bound.</div>';
     qsa('#btn-psi-mobile, #btn-psi-desktop').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -481,23 +488,27 @@
 
   function renderFixes(data) {
     var fixes = data.suggestions || [];
-    var hlRow = '<div class="hl-row"><button class="copy-btn" id="btn-highlight">Highlight issues on page</button>' +
+    var hlRow = '<div class="hl-row"><button class="btn-sm" id="btn-highlight">Highlight issues on page</button>' +
       '<span class="hl-legend" id="hl-legend"><i class="sw sw-e"></i>error&nbsp;&nbsp;<i class="sw sw-w"></i>warning</span></div>';
     if (!fixes.length) {
       el('tab-fixes').innerHTML = hlRow +
-        '<div class="ok-line">No issues found that have ready-made fixes. Nice work!</div>';
+        '<div class="ok-line"><span class="st-ico ok">✓</span><span>No issues found that have ready-made fixes. Nice work!</span></div>';
     } else {
+      var nFail = fixes.filter(function (f) { return f.level === 'fail'; }).length;
       el('tab-fixes').innerHTML = hlRow +
-        '<div class="note" style="margin-bottom:10px">Rule-based suggestions generated from this page\u2019s issues. Review before using.</div>' +
+        '<div class="group-head">Issues <span class="count-badge ' + (nFail ? 'bad-bg' : 'warn-bg') + '">' + fixes.length + '</span></div>' +
+        '<div class="note" style="margin:0 0 10px">Rule-based suggestions generated from this page\u2019s issues. Review before using.</div>' +
         fixes.map(function (f, i) {
-          return '<div class="fix-card"><div class="fix-title">' + escapeHtml(f.title) + '</div>' +
+          var lvl = f.level === 'fail' ? 'fail' : 'warn';
+          return '<div class="fix-card"><div class="fix-head"><span class="st-ico ' + statusClass(lvl) + '">' + statusGlyph(lvl) + '</span>' +
+            '<div class="fix-title">' + escapeHtml(f.title) + '</div></div>' +
             '<div class="fix-why">' + escapeHtml(f.why) + '</div>' +
-            '<pre class="fix-snippet">' + escapeHtml(f.snippet) + '</pre>' +
-            '<button class="copy-btn" data-fix="' + i + '">Copy snippet</button></div>';
+            '<pre class="code">' + escapeHtml(f.snippet) + '</pre>' +
+            '<button class="btn-sm" data-fix="' + i + '">Copy snippet</button></div>';
         }).join('');
     }
     el('btn-highlight').addEventListener('click', function () { setHighlight(!hlOn); });
-    qsa('#tab-fixes .copy-btn[data-fix]').forEach(function (btn) {
+    qsa('#tab-fixes .btn-sm[data-fix]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var f = fixes[parseInt(btn.dataset.fix, 10)];
         copyText(f.snippet).then(function () {
@@ -533,13 +544,13 @@
     if (im.oversizedCount > 0) {
       html += '<div class="section-label">Oversized images</div>' +
         im.oversized.map(function (o) {
-          return '<div class="alt-row mono">' + escapeHtml(o.src) +
+          return '<div class="code">' + escapeHtml(o.src) +
             '<br>natural ' + escapeHtml(o.natural) + ' → displayed ' + escapeHtml(o.displayed) + '</div>';
         }).join('');
     }
     if (im.missingAltCount > 0) {
       html += '<div class="section-label">Images without alt</div>' +
-        im.missingAlt.map(function (src) { return '<div class="alt-row mono">' + escapeHtml(src) + '</div>'; }).join('');
+        im.missingAlt.map(function (src) { return '<div class="code">' + escapeHtml(src) + '</div>'; }).join('');
       if (im.missingAltCount > im.missingAlt.length) {
         html += '<div class="empty">…and ' + (im.missingAltCount - im.missingAlt.length) + ' more.</div>';
       }
@@ -560,7 +571,7 @@
         (bl.truncated ? ' of ' + bl.total : '') + ')</div>';
       if (bl.broken.length) {
         html += bl.broken.map(function (b) {
-          return '<div class="alt-row mono broken">✗ ' + escapeHtml(b.url) +
+          return '<div class="code">✗ ' + escapeHtml(b.url) +
             ' <span class="status-code">HTTP ' + b.status + (b.timeout ? ' (timeout)' : '') + '</span></div>';
         }).join('');
       } else {
@@ -568,7 +579,7 @@
       }
       if (bl.unreachable.length) {
         html += '<div class="section-label">Unreachable external links</div>' +
-          bl.unreachable.map(function (b) { return '<div class="alt-row mono">✗ ' + escapeHtml(b.url) + '</div>'; }).join('') +
+          bl.unreachable.map(function (b) { return '<div class="code">✗ ' + escapeHtml(b.url) + '</div>'; }).join('') +
           '<div class="note">External checks are reachability-only, browsers hide cross-origin status codes.</div>';
       }
     }
@@ -589,7 +600,7 @@
     var html = kv('JSON-LD blocks', j.blocks);
     if (j.types && j.types.length) {
       html += '<div class="section-label">Detected types</div>' +
-        j.types.map(function (t) { return '<div class="alt-row mono">' + escapeHtml(t) + '</div>'; }).join('');
+        j.types.map(function (t) { return '<div class="code">' + escapeHtml(t) + '</div>'; }).join('');
     } else {
       html += '<div class="empty" style="margin-top:8px">No schema types detected.</div>';
     }
@@ -727,7 +738,7 @@
         sparkline(list.slice(-20)) +
         '<div class="section-label">Scans (' + list.length + ')</div>' +
         '<div class="hist-list">' + rows + '</div>' +
-        '<button class="copy-btn" id="btn-clear-history">Clear history for this page</button>' +
+        '<button class="btn-sm" id="btn-clear-history">Clear history for this page</button>' +
         '<div class="note">Stored only on this device, nothing leaves your browser.</div>';
       el('btn-clear-history').addEventListener('click', function () {
         loadHistory(function (hh) {
@@ -740,6 +751,8 @@
 
   // ---- Report export ----
   function statusIcon(s) { return s === 'pass' ? '✓' : (s === 'warn' ? '⚠' : '✗'); }
+  function statusGlyph(s) { return s === 'pass' ? '\u2713' : (s === 'warn' ? '\u26a0' : '\u2717'); }
+  function statusClass(s) { return s === 'pass' ? 'ok' : (s === 'warn' ? 'warn' : 'bad'); }
 
   function buildMarkdown(data) {
     var L = [];
@@ -815,7 +828,7 @@
         L.push('');
       });
     }
-    L.push('_Generated by SEO Lens v0.5.4_');
+    L.push('_Generated by SEO Lens v0.6.0_');
     return L.join('\n');
   }
 
