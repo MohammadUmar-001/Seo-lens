@@ -7,7 +7,9 @@
 
 One click. A full SEO X-ray of any page: meta tags, headings, images, links, social cards, structured data, performance, and a 0-100 score. Everything is computed locally from the live page. No accounts, no tracking, no sample data. Every number you see came from the page in front of you.
 
-![SEO Lens overview](screenshots/overview.png)
+Try it on the [live demo page](https://mohammadumar-001.github.io/seo-lens/demo/): a sample coffee-shop site with real SEO flaws planted for you to find.
+
+![SEO Lens analyzing the live demo page](screenshots/demo-overview.png)
 
 ## Features
 
