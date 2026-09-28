@@ -39,7 +39,7 @@ Deliberately **excluded from scoring** (still reported, for reference): performa
 
 Every scan is saved automatically to `chrome.storage.local` on your device. Rescans within 30 minutes are skipped unless the score changed, and each page keeps its last 50 scans. The History tab shows a trend sparkline, the delta vs. the previous scan, and check counts. One click clears a page's history. Nothing ever leaves your browser.
 
-![SEO Lens history](screenshots/history.png)
+![SEO Lens history](screenshots/history-demo.png)
 
 ### Real-world example: flowlancerr.com
 
