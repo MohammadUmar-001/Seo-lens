@@ -1,4 +1,4 @@
-// SEO Lens panel v0.6.0, floating top-right Shadow DOM panel.
+// SEO Lens panel v0.6.1, floating top-right Shadow DOM panel.
 // Runs as a content script in the page's isolated world (injected after scraper.js).
 // UI lives in a Shadow DOM with constructed stylesheets, so the host page's
 // CSS/CSP can't touch it. Dependency-free: no imports.
@@ -53,7 +53,7 @@
     '<div id="app">' +
     '  <header>' +
     '    <div class="brand-row">' +
-    '      <div class="brand">SEO Lens <span class="ver">v0.6.0</span></div>' +
+    '      <div class="brand">SEO Lens <span class="ver">v0.6.1</span></div>' +
     '      <div class="brand-actions">' +
     '        <button id="sl-expand" title="Toggle wide panel">\u2922</button>' +
     '        <button id="sl-close" title="Close panel">\u00d7</button>' +
@@ -473,17 +473,183 @@
       kv('DOM ready', fmtSecs(p.domContentLoaded)) +
       kv('Long tasks (>50ms)', p.longTasks) +
       '<div class="section-label">Deep analysis</div>' +
-      '<div class="hl-row"><button class="btn-sm" id="btn-psi-mobile">PageSpeed Insights: Mobile</button>' +
-      '<button class="btn-sm" id="btn-psi-desktop">PageSpeed Insights: Desktop</button></div>' +
-      '<div class="note">Opens Google PageSpeed Insights for this exact URL in a new tab.</div>' +
+      '<div class="hl-row"><button class="btn-sm" id="btn-psi-mobile">Run PageSpeed test: Mobile</button>' +
+      '<button class="btn-sm" id="btn-psi-desktop">Run PageSpeed test: Desktop</button></div>' +
+      '<div id="psi-out"></div>' +
+      '<div class="psi-key-wrap"><button class="link-btn" id="btn-psi-key-toggle">Have a PageSpeed API key? Add it for reliable tests</button>' +
+      '<div class="psi-key-row" id="psi-key-row" hidden><input id="psi-key-input" type="text" placeholder="Paste API key" autocomplete="off" spellcheck="false">' +
+      '<button class="btn-sm" id="btn-psi-key-save">Save</button></div></div>' +
+      '<div class="note">Runs Google PageSpeed Insights on this exact URL and shows the scores right here. ' +
+      '<a href="https://developers.google.com/speed/docs/using-api#APIKey" target="_blank" rel="noopener">Get a free key</a> if keyless tests get rate-limited.</div>' +
       '<div class="note">Transfer size excludes cross-origin resources without timing permission, treat as a lower bound.</div>';
+    wirePsiButtons(data);
+  }
+
+  // Inline PageSpeed Insights: runs Google's test on the current URL and
+  // renders the lab scores here instead of opening a new tab. Google
+  // rate-limits keyless requests on a shared quota, so an optional API key
+  // (free, stored device-only) makes tests reliable.
+  var PSI_ENDPOINT = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
+  var psiKey = null, psiKeyLoaded = false, psiRunning = false, psiLastStrategy = null;
+
+  function psiGetKey(cb) {
+    if (psiKeyLoaded) return cb(psiKey);
+    try {
+      chrome.storage.local.get('psiKey', function (res) {
+        psiKeyLoaded = true;
+        psiKey = (res && res.psiKey) || null;
+        var inp = el('psi-key-input');
+        if (inp && psiKey) inp.value = psiKey;
+        cb(psiKey);
+      });
+    } catch (e) { psiKeyLoaded = true; cb(null); }
+  }
+
+  function psiBuildUrl(pageUrl, strategy, key) {
+    var fields = 'lighthouseResult(requestedUrl,finalUrl,fetchTime,categories,' +
+      'audits(first-contentful-paint,largest-contentful-paint,total-blocking-time,cumulative-layout-shift,speed-index,interactive))';
+    var u = PSI_ENDPOINT + '?url=' + encodeURIComponent(pageUrl) +
+      '&strategy=' + strategy +
+      '&category=performance&category=accessibility&category=best-practices&category=seo' +
+      '&fields=' + encodeURIComponent(fields);
+    if (key) u += '&key=' + encodeURIComponent(key);
+    return u;
+  }
+
+  function psiReportUrl(pageUrl, strategy) {
+    return 'https://pagespeed.web.dev/analysis?url=' + encodeURIComponent(pageUrl) +
+      '&form_factor=' + (strategy === 'mobile' ? 'mobile' : 'desktop');
+  }
+
+  function psiScoreColor(n) {
+    if (n == null) return 'var(--faint)';
+    if (n >= 90) return 'var(--green)';
+    if (n >= 50) return 'var(--amber)';
+    return 'var(--red)';
+  }
+
+  function psiResultHtml(lr) {
+    var cats = lr.categories || {};
+    function sc(name) {
+      var c = cats[name];
+      return (c && typeof c.score === 'number') ? Math.round(c.score * 100) : null;
+    }
+    var defs = [['performance', 'Performance'], ['accessibility', 'Accessibility'],
+                ['best-practices', 'Best practices'], ['seo', 'SEO']];
+    var cards = defs.map(function (d) {
+      var s = sc(d[0]);
+      return '<div class="psi-score"><span class="psi-num" style="color:' + psiScoreColor(s) + '">' +
+        (s == null ? 'n/a' : s) + '</span><span class="psi-cat">' + d[1] + '</span></div>';
+    }).join('');
+    var audits = lr.audits || {};
+    function metric(id, label) {
+      var a = audits[id];
+      return kv(label, (a && a.displayValue) ? a.displayValue : 'n/a');
+    }
+    var when = '';
+    try { when = lr.fetchTime ? new Date(lr.fetchTime).toLocaleString() : ''; } catch (e) {}
+    return '<div class="psi-grid">' + cards + '</div>' +
+      metric('first-contentful-paint', 'First Contentful Paint') +
+      metric('largest-contentful-paint', 'Largest Contentful Paint') +
+      metric('total-blocking-time', 'Total Blocking Time') +
+      metric('cumulative-layout-shift', 'Cumulative Layout Shift') +
+      metric('speed-index', 'Speed Index') +
+      metric('interactive', 'Time to Interactive') +
+      '<div class="note">Lab scores from Google PageSpeed Insights' +
+      (when ? ', tested ' + escapeHtml(when) : '') + '. ' +
+      '<button class="link-btn" id="btn-psi-open">Open full report</button></div>';
+  }
+
+  function psiSetButtons(disabled) {
+    ['btn-psi-mobile', 'btn-psi-desktop'].forEach(function (id) {
+      var b = el(id);
+      if (b) b.disabled = disabled;
+    });
+  }
+
+  function wirePsiOpen(pageUrl, strategy) {
+    var b = el('btn-psi-open');
+    if (b) b.addEventListener('click', function () {
+      window.open(psiReportUrl(pageUrl, strategy), '_blank', 'noopener');
+    });
+  }
+
+  function psiRun(strategy, pageUrl) {
+    if (psiRunning) return;
+    psiRunning = true;
+    psiLastStrategy = strategy;
+    psiSetButtons(true);
+    el('psi-out').innerHTML = '<div class="psi-loading"><span class="spinner"></span>' +
+      '<span>Running PageSpeed test (' + escapeHtml(strategy) + ')... this can take up to a minute.</span></div>';
+    psiGetKey(function (key) {
+      var ctrl = null, timer = null;
+      try {
+        ctrl = new AbortController();
+        timer = setTimeout(function () { ctrl.abort(); }, 90000);
+      } catch (e) {}
+      fetch(psiBuildUrl(pageUrl, strategy, key), ctrl ? { signal: ctrl.signal } : {})
+        .then(function (resp) {
+          if (timer) clearTimeout(timer);
+          if (!resp.ok) {
+            return resp.json().catch(function () { return null; }).then(function (body) {
+              var msg = body && body.error && body.error.message ? body.error.message : ('HTTP ' + resp.status);
+              throw { status: resp.status, message: msg };
+            });
+          }
+          return resp.json();
+        })
+        .then(function (json) {
+          psiRunning = false;
+          psiSetButtons(false);
+          var lr = json && json.lighthouseResult;
+          if (!lr) throw { status: 0, message: 'Unexpected response from PageSpeed.' };
+          el('psi-out').innerHTML = psiResultHtml(lr);
+          wirePsiOpen(pageUrl, strategy);
+        })
+        .catch(function (err) {
+          if (timer) clearTimeout(timer);
+          psiRunning = false;
+          psiSetButtons(false);
+          var quota = err && (err.status === 429 || err.status === 403);
+          var aborted = err && err.name === 'AbortError';
+          var html;
+          if (aborted) {
+            html = '<div class="psi-error">The test timed out. Check your connection and try again.</div>';
+          } else if (quota) {
+            html = '<div class="psi-error">Google rate-limited this test, the shared free quota is used up right now. ' +
+              'Add your own free API key for reliable tests, or open the full report instead.</div>' +
+              '<div class="hl-row"><button class="btn-sm" id="btn-psi-open">Open full report in new tab</button></div>';
+          } else {
+            html = '<div class="psi-error">Could not run the test: ' +
+              escapeHtml(err && err.message ? err.message : String(err)) + '</div>' +
+              '<div class="hl-row"><button class="btn-sm" id="btn-psi-open">Open full report in new tab</button></div>';
+          }
+          el('psi-out').innerHTML = html;
+          if (quota) { var row = el('psi-key-row'); if (row) row.hidden = false; }
+          wirePsiOpen(pageUrl, strategy);
+        });
+    });
+  }
+
+  function wirePsiButtons(data) {
+    var pageUrl = data.url || location.href;
     qsa('#btn-psi-mobile, #btn-psi-desktop').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var ff = btn.id === 'btn-psi-mobile' ? 'mobile' : 'desktop';
-        window.open('https://pagespeed.web.dev/analysis?url=' +
-          encodeURIComponent(data.url || location.href) + '&form_factor=' + ff, '_blank', 'noopener');
+        psiRun(btn.id === 'btn-psi-mobile' ? 'mobile' : 'desktop', pageUrl);
       });
     });
+    var toggle = el('btn-psi-key-toggle'), row = el('psi-key-row');
+    if (toggle && row) toggle.addEventListener('click', function () { row.hidden = !row.hidden; });
+    var save = el('btn-psi-key-save'), input = el('psi-key-input');
+    if (save && input) save.addEventListener('click', function () {
+      var v = input.value.trim();
+      try { chrome.storage.local.set({ psiKey: v }, function () {}); } catch (e) {}
+      psiKey = v;
+      psiKeyLoaded = true;
+      row.hidden = true;
+      if (psiLastStrategy) psiRun(psiLastStrategy, pageUrl);
+    });
+    psiGetKey(function () {});
   }
 
   function renderFixes(data) {
@@ -828,7 +994,7 @@
         L.push('');
       });
     }
-    L.push('_Generated by SEO Lens v0.6.0_');
+    L.push('_Generated by SEO Lens v0.6.1_');
     return L.join('\n');
   }
 

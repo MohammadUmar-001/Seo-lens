@@ -1,6 +1,6 @@
 # SEO Lens
 
-![version](https://img.shields.io/badge/version-0.6.0-blue)
+![version](https://img.shields.io/badge/version-0.6.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![manifest](https://img.shields.io/badge/manifest-V3-orange)
 ![privacy](https://img.shields.io/badge/tracking-zero-red)
@@ -57,7 +57,7 @@ MV3 is supported in recent versions. Use `about:debugging` -> This Firefox -> Lo
 - All analysis runs locally in the browser against the live DOM.
 - Score history lives in `chrome.storage.local`, device only.
 - The only network calls are the ones the page itself would trigger (robots.txt/sitemap checks, plus the PageSpeed buttons you click).
-- Permissions: `activeTab`, `scripting`, `clipboardWrite`, `storage`. Nothing more.
+- Permissions: `activeTab`, `scripting`, `clipboardWrite`, `storage`, plus host access to `https://www.googleapis.com/` only for the inline PageSpeed tests. Nothing more.
 
 ## Development
 
@@ -70,6 +70,12 @@ The panel is vanilla JS + CSS in a Shadow DOM (no frameworks, no build step). Ed
 - `test-fixture.html` - local test page (not shipped in releases)
 
 ## Changelog
+
+**v0.6.1**
+- PageSpeed tests now run inline: the Performance tab shows Google's lab scores (Performance, Accessibility, Best practices, SEO) plus Core Web Vitals right in the panel, no new tab needed. Optional free API key field for reliable tests, keyless tests use Google's shared quota
+- Subtle fade-up animation when switching tabs
+- Key/value rows now wrap at word boundaries and left-align their values
+- Removed the header logo icon; nothing in the UI uses a font weight above 600 anymore
 
 **v0.6.0**
 - Full UI redesign in an audit-card style: 2x2 stat grid (Score / Issues / Warnings / Passed), underline tab strip, status-icon check rows, code snippet boxes, and a black Copy report button
