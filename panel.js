@@ -1,4 +1,4 @@
-// SEO Lens panel v0.4.0, floating bottom-right panel.
+// SEO Lens panel v0.6.0, floating top-right Shadow DOM panel.
 // Runs as a content script in the page's isolated world (injected after scraper.js).
 // UI lives in a Shadow DOM with constructed stylesheets, so the host page's
 // CSS/CSP can't touch it. Dependency-free: no imports.
@@ -53,7 +53,7 @@
     '<div id="app">' +
     '  <header>' +
     '    <div class="brand-row">' +
-    '      <div class="brand"><span class="brand-mark">\u25c9</span>SEO Lens <span class="ver">v0.6.0</span></div>' +
+    '      <div class="brand">SEO Lens <span class="ver">v0.6.0</span></div>' +
     '      <div class="brand-actions">' +
     '        <button id="sl-expand" title="Toggle wide panel">\u2922</button>' +
     '        <button id="sl-close" title="Close panel">\u00d7</button>' +
