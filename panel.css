@@ -1,8 +1,8 @@
-/* SEO Lens v0.4.0 — floating panel design system (Shadow DOM) */
+/* SEO Lens v0.4.0, floating panel design system (Shadow DOM) */
 
 * { box-sizing: border-box; }
 
-/* Inter — bundled locally, no external requests */
+/* Inter, bundled locally, no external requests */
 @font-face {
   font-family: 'Inter';
   font-style: normal;

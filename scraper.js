@@ -1,4 +1,4 @@
-// SEO Lens scraper v0.3 — injected into the active tab via chrome.scripting.
+// SEO Lens scraper v0.3, injected into the active tab via chrome.scripting.
 // Must stay dependency-free: no imports, no closure variables from outside.
 (function () {
   function clean(el) {
@@ -40,7 +40,7 @@
 
   // Visible page text only: strips code (<script>/<style>), hidden nodes and
   // non-content elements so keyword stats reflect what readers (and Google)
-  // actually see. Works on a clone — never mutates the live page.
+  // actually see. Works on a clone, never mutates the live page.
   function visibleText() {
     var body = document.body || document.documentElement;
     var clone = body.cloneNode(true);
@@ -83,7 +83,7 @@
   }
 
   // Two-word phrases from consecutive meaningful tokens ("track time" from
-  // "track the time") — closer to what real SEO tools report.
+  // "track the time"), closer to what real SEO tools report.
   function topPhrases(tokens, totalWords, limit) {
     var phrases = [];
     for (var i = 0; i + 1 < tokens.length; i++) {
@@ -103,7 +103,7 @@
     return fetchText(location.origin + '/robots.txt').then(function (txt) {
       var blocked = false, longest = -1, sitemaps = [];
       // Only rules under "User-agent: *" apply to general crawlers like
-      // Googlebot — rules for other named bots must not affect the verdict.
+      // Googlebot, rules for other named bots must not affect the verdict.
       var groupStar = false, inUAs = false;
       txt.split(/\r?\n/).forEach(function (line) {
         line = line.trim();
@@ -245,42 +245,42 @@
     // ---- Title ----
     var title = document.title.trim();
     if (!title) add('title', 'Page title', 'fail', 'Missing <title>.');
-    else if (title.length < 30) add('title', 'Page title', 'warn', 'Only ' + title.length + ' characters — aim for 30–60.');
-    else if (title.length > 60) add('title', 'Page title', 'warn', title.length + ' characters — may get truncated in search results. Aim for 30–60.');
+    else if (title.length < 30) add('title', 'Page title', 'warn', 'Only ' + title.length + ' characters, aim for 30–60.');
+    else if (title.length > 60) add('title', 'Page title', 'warn', title.length + ' characters, may get truncated in search results. Aim for 30–60.');
     else add('title', 'Page title', 'pass', title.length + ' characters. Looks good.');
 
     // ---- Meta description ----
     var desc = metaContent('description');
     if (!desc) add('meta-description', 'Meta description', 'fail', 'Missing meta description.');
-    else if (desc.length < 120) add('meta-description', 'Meta description', 'warn', 'Only ' + desc.length + ' characters — aim for 120–160.');
-    else if (desc.length > 160) add('meta-description', 'Meta description', 'warn', desc.length + ' characters — may get truncated. Aim for 120–160.');
+    else if (desc.length < 120) add('meta-description', 'Meta description', 'warn', 'Only ' + desc.length + ' characters, aim for 120–160.');
+    else if (desc.length > 160) add('meta-description', 'Meta description', 'warn', desc.length + ' characters, may get truncated. Aim for 120–160.');
     else add('meta-description', 'Meta description', 'pass', desc.length + ' characters. Looks good.');
 
     // ---- Canonical / robots / viewport / lang ----
     var canonicalEl = document.querySelector('link[rel="canonical"]');
     var canonical = canonicalEl ? (canonicalEl.getAttribute('href') || '') : '';
     if (!canonical) {
-      add('canonical', 'Canonical URL', 'warn', 'No canonical link — search engines choose the URL themselves.');
+      add('canonical', 'Canonical URL', 'warn', 'No canonical link, search engines choose the URL themselves.');
     } else {
       var absCanon = '';
       try { absCanon = new URL(canonical, location.href).href.split('#')[0].replace(/\/$/, ''); } catch (e) {}
       var selfUrl = location.href.split('#')[0].replace(/\/$/, '');
       if (!absCanon) add('canonical', 'Canonical URL', 'warn', 'Canonical href is not a valid URL.');
       else if (!/^https?:\/\//i.test(canonical) && canonical.indexOf('//') !== 0)
-        add('canonical', 'Canonical URL', 'warn', 'Canonical is relative ("' + canonical.slice(0, 60) + '") — use an absolute URL.');
+        add('canonical', 'Canonical URL', 'warn', 'Canonical is relative ("' + canonical.slice(0, 60) + '"), use an absolute URL.');
       else if (absCanon !== selfUrl)
-        add('canonical', 'Canonical URL', 'warn', 'Canonical points to a different URL — this page may not earn its own ranking signal.');
+        add('canonical', 'Canonical URL', 'warn', 'Canonical points to a different URL, this page may not earn its own ranking signal.');
       else add('canonical', 'Canonical URL', 'pass', 'Self-referencing canonical. Good.');
     }
 
     var robots = metaContent('robots');
     if (/noindex/i.test(robots))
-      add('robots', 'Robots meta', 'fail', 'content="noindex" — this page is excluded from search results.');
+      add('robots', 'Robots meta', 'fail', 'content="noindex", this page is excluded from search results.');
     else add('robots', 'Robots meta', 'pass', robots ? robots : 'Not set (defaults to index, follow).');
 
     var viewport = metaContent('viewport');
     add('viewport', 'Viewport meta', viewport ? 'pass' : 'fail',
-      viewport ? 'Present — mobile-friendly signal.' : 'Missing viewport meta — hurts mobile experience.');
+      viewport ? 'Present: mobile-friendly signal.' : 'Missing viewport meta, hurts mobile experience.');
 
     var lang = document.documentElement.getAttribute('lang') || '';
     add('lang', 'HTML language', lang ? 'pass' : 'warn',
@@ -290,8 +290,8 @@
     var proto = location.protocol;
     var isHttps = proto === 'https:';
     if (isHttps) add('https', 'HTTPS', 'pass', 'Page served over HTTPS.');
-    else if (proto === 'http:') add('https', 'HTTPS', 'fail', 'Page served over plain HTTP — browsers flag this as "not secure".');
-    else add('https', 'HTTPS', 'warn', 'Not served over HTTP(S) — check skipped.');
+    else if (proto === 'http:') add('https', 'HTTPS', 'fail', 'Page served over plain HTTP, browsers flag this as "not secure".');
+    else add('https', 'HTTPS', 'warn', 'Not served over HTTP(S), check skipped.');
 
     var mixed = [];
     if (isHttps) {
@@ -299,7 +299,7 @@
       Array.prototype.forEach.call(resEls, function (el) {
         var s = el.getAttribute('src') || el.getAttribute('href') || '';
         if (/^http:/i.test(s)) mixed.push(s.slice(0, 120));
-        // srcset="http://… 1x, http://… 2x" — check each candidate URL too
+        // srcset="http://… 1x, http://… 2x", check each candidate URL too
         var ss = el.getAttribute('srcset') || '';
         ss.split(',').forEach(function (part) {
           var u = (part.trim().split(/\s+/)[0] || '');
@@ -318,7 +318,7 @@
     });
     var h1Count = headings.filter(function (h) { return h.level === 1; }).length;
     if (h1Count === 0) add('h1', 'Single H1', 'fail', 'No H1 found.');
-    else if (h1Count > 1) add('h1', 'Single H1', 'warn', h1Count + ' H1 tags — ideally one per page.');
+    else if (h1Count > 1) add('h1', 'Single H1', 'warn', h1Count + ' H1 tags, ideally one per page.');
     else add('h1', 'Single H1', 'pass', 'Exactly one H1.');
     var h1Text = headings.filter(function (h) { return h.level === 1; }).map(function (h) { return h.text; }).join(' ');
 
@@ -350,7 +350,7 @@
     else if (missingAlt.length === 0) add('img-alt', 'Image alt text', 'pass', 'All ' + imgs.length + ' images have alt text.');
     else add('img-alt', 'Image alt text', 'warn', missingAlt.length + ' of ' + imgs.length + ' images missing alt text.');
     if (imgs.length && oversized.length) add('img-size', 'Image sizing', 'warn',
-      oversized.length + ' image(s) served much larger than displayed — wastes bandwidth.');
+      oversized.length + ' image(s) served much larger than displayed, wastes bandwidth.');
     else if (imgs.length) add('img-size', 'Image sizing', 'pass', 'No oversized images detected.');
 
     // ---- Links ----
@@ -376,7 +376,7 @@
     var ogMissing = ogTags.filter(function (t) { return !og[t]; });
     if (ogMissing.length === 0) {
       if (!/^https?:\/\//i.test(og['og:image']))
-        add('og', 'Open Graph tags', 'warn', 'All present, but og:image is not an absolute URL — link previews may break.');
+        add('og', 'Open Graph tags', 'warn', 'All present, but og:image is not an absolute URL, link previews may break.');
       else add('og', 'Open Graph tags', 'pass', 'og:title, og:description, og:image all present.');
     }
     else add('og', 'Open Graph tags', 'warn', 'Missing: ' + ogMissing.join(', '));
@@ -405,11 +405,11 @@
       ldBlocks.length + ' JSON-LD block(s): ' + (typeList.join(', ') || 'unknown types'));
     else add('schema', 'Structured data', 'warn', 'No JSON-LD structured data found.');
 
-    // ---- Words + keywords (visible text only — no code, no hidden nodes) ----
+    // ---- Words + keywords (visible text only, no code, no hidden nodes) ----
     var bodyText = visibleText();
     var wordCount = bodyText ? bodyText.split(/\s+/).length : 0;
     add('wordcount', 'Content length', wordCount >= 300 ? 'pass' : 'warn',
-      wordCount + ' words' + (wordCount < 300 ? ' — thin content may underperform.' : '.'));
+      wordCount + ' words' + (wordCount < 300 ? ', thin content may underperform.' : '.'));
 
     var tokens = tokenize(bodyText);
     var keywords = topKeywords(tokens, wordCount, 10);
@@ -448,26 +448,26 @@
       var mb = perf.bytes / 1048576;
       if (perf.bytes === 0) add('page-weight', 'Page weight', 'warn', 'Transfer size not measurable (cross-origin resources hide it).');
       else if (mb < 1) add('page-weight', 'Page weight', 'pass', mb.toFixed(2) + ' MB transferred.');
-      else if (mb < 3) add('page-weight', 'Page weight', 'warn', mb.toFixed(2) + ' MB transferred — aim for under 1 MB.');
-      else add('page-weight', 'Page weight', 'fail', mb.toFixed(2) + ' MB transferred — heavy pages rank and convert worse.');
+      else if (mb < 3) add('page-weight', 'Page weight', 'warn', mb.toFixed(2) + ' MB transferred, aim for under 1 MB.');
+      else add('page-weight', 'Page weight', 'fail', mb.toFixed(2) + ' MB transferred, heavy pages rank and convert worse.');
 
       if (perf.requests === 0) add('requests', 'Request count', 'warn', 'Could not count requests.');
       else if (perf.requests < 50) add('requests', 'Request count', 'pass', perf.requests + ' requests.');
-      else if (perf.requests <= 100) add('requests', 'Request count', 'warn', perf.requests + ' requests — consider bundling.');
-      else add('requests', 'Request count', 'fail', perf.requests + ' requests — very chatty page.');
+      else if (perf.requests <= 100) add('requests', 'Request count', 'warn', perf.requests + ' requests, consider bundling.');
+      else add('requests', 'Request count', 'fail', perf.requests + ' requests, very chatty page.');
 
       if (perf.lcp == null) add('lcp', 'Largest Contentful Paint', 'warn', 'Not measurable yet (try scrolling / waiting for load).');
-      else if (perf.lcp < 2500) add('lcp', 'Largest Contentful Paint', 'pass', (perf.lcp / 1000).toFixed(2) + 's — good.');
-      else if (perf.lcp < 4000) add('lcp', 'Largest Contentful Paint', 'warn', (perf.lcp / 1000).toFixed(2) + 's — needs improvement (target < 2.5s).');
-      else add('lcp', 'Largest Contentful Paint', 'fail', (perf.lcp / 1000).toFixed(2) + 's — poor (target < 2.5s).');
+      else if (perf.lcp < 2500) add('lcp', 'Largest Contentful Paint', 'pass', (perf.lcp / 1000).toFixed(2) + 's, good.');
+      else if (perf.lcp < 4000) add('lcp', 'Largest Contentful Paint', 'warn', (perf.lcp / 1000).toFixed(2) + 's, needs improvement (target < 2.5s).');
+      else add('lcp', 'Largest Contentful Paint', 'fail', (perf.lcp / 1000).toFixed(2) + 's, poor (target < 2.5s).');
 
       if (perf.cls == null) add('cls', 'Cumulative Layout Shift', 'warn', 'No layout shifts recorded yet.');
-      else if (perf.cls < 0.1) add('cls', 'Cumulative Layout Shift', 'pass', perf.cls + ' — good.');
-      else if (perf.cls < 0.25) add('cls', 'Cumulative Layout Shift', 'warn', perf.cls + ' — needs improvement (target < 0.1).');
-      else add('cls', 'Cumulative Layout Shift', 'fail', perf.cls + ' — poor (target < 0.1).');
+      else if (perf.cls < 0.1) add('cls', 'Cumulative Layout Shift', 'pass', perf.cls + ', good.');
+      else if (perf.cls < 0.25) add('cls', 'Cumulative Layout Shift', 'warn', perf.cls + ', needs improvement (target < 0.1).');
+      else add('cls', 'Cumulative Layout Shift', 'fail', perf.cls + ', poor (target < 0.1).');
 
       if (perf.ttfb != null) add('ttfb', 'Time to First Byte', perf.ttfb < 800 ? 'pass' : 'warn',
-        (perf.ttfb / 1000).toFixed(2) + 's' + (perf.ttfb < 800 ? ' — good.' : ' — slow server response.'));
+        (perf.ttfb / 1000).toFixed(2) + 's' + (perf.ttfb < 800 ? ', good.' : ', slow server response.'));
     }
 
     // ---- SERP preview data ----
@@ -516,7 +516,7 @@
 
     if (d.meta.robots && /noindex/i.test(d.meta.robots)) {
       out.push({
-        title: 'Remove noindex — this page is invisible to Google',
+        title: 'Remove noindex, this page is invisible to Google',
         why: 'The robots meta tag tells search engines to exclude this page from results. Only keep noindex on pages you truly want hidden (admin, thank-you pages).',
         snippet: '<meta name="robots" content="index, follow">'
       });
@@ -524,7 +524,7 @@
     if (!d.title && d.h1Text) {
       out.push({
         title: 'Add a missing page title',
-        why: 'Search engines invent their own title when none exists — usually a bad one.',
+        why: 'Search engines invent their own title when none exists, usually a bad one.',
         snippet: '<title>' + truncate(d.h1Text + ' | ' + d.host, 60) + '</title>'
       });
     } else if (d.title.length > 60) {
@@ -535,7 +535,7 @@
       });
     }
     if (!d.meta.description) {
-      // Only visible paragraphs — hidden modal/drawer copy must not become the snippet.
+      // Only visible paragraphs, hidden modal/drawer copy must not become the snippet.
       var paras = Array.prototype.slice.call(document.querySelectorAll('p'))
         .filter(function (p) { return p.getClientRects().length > 0; })
         .map(clean).filter(function (p) { return p.length > 80; })
@@ -554,7 +554,7 @@
         out.push({
           title: 'Work "' + p.keyword + '" into the title',
           why: 'Your top keyword "' + p.keyword + '" appears nowhere in the title.',
-          snippet: '<title>' + truncate(cap(p.keyword) + ' — ' + d.title, 60) + '</title>'
+          snippet: '<title>' + truncate(cap(p.keyword) + ', ' + d.title, 60) + '</title>'
         });
       }
     });
@@ -617,17 +617,17 @@
       data.crawl = { robots: robots, sitemap: sitemap };
       data.brokenLinks = links;
 
-      if (!robots.checkable) data.checks.push({ id: 'robots-txt', label: 'robots.txt', status: 'warn', detail: 'Could not check — non-HTTP page.' });
-      else if (!robots.exists) data.checks.push({ id: 'robots-txt', label: 'robots.txt', status: 'pass', detail: 'No robots.txt found (not required — defaults apply).' });
-      else if (robots.blocked) data.checks.push({ id: 'robots-txt', label: 'robots.txt', status: 'fail', detail: 'This page is DISALLOWED by robots.txt — search engines will not crawl it!' });
+      if (!robots.checkable) data.checks.push({ id: 'robots-txt', label: 'robots.txt', status: 'warn', detail: 'Could not check, non-HTTP page.' });
+      else if (!robots.exists) data.checks.push({ id: 'robots-txt', label: 'robots.txt', status: 'pass', detail: 'No robots.txt found (not required, defaults apply).' });
+      else if (robots.blocked) data.checks.push({ id: 'robots-txt', label: 'robots.txt', status: 'fail', detail: 'This page is DISALLOWED by robots.txt, search engines will not crawl it!' });
       else data.checks.push({ id: 'robots-txt', label: 'robots.txt', status: 'pass', detail: 'Page is allowed by robots.txt.' + (robots.sitemaps.length ? ' Sitemap directive found.' : '') });
 
-      if (!sitemap.checkable) data.checks.push({ id: 'sitemap', label: 'sitemap.xml', status: 'warn', detail: 'Could not check — non-HTTP page.' });
+      if (!sitemap.checkable) data.checks.push({ id: 'sitemap', label: 'sitemap.xml', status: 'warn', detail: 'Could not check, non-HTTP page.' });
       else if (!sitemap.exists) data.checks.push({ id: 'sitemap', label: 'sitemap.xml', status: 'warn', detail: 'No sitemap.xml found at the site root.' });
       else if (sitemap.containsPage) data.checks.push({ id: 'sitemap', label: 'sitemap.xml', status: 'pass', detail: 'This page is listed in sitemap.xml.' + (sitemap.isIndex ? ' (sitemap index)' : '') });
       else data.checks.push({ id: 'sitemap', label: 'sitemap.xml', status: 'warn', detail: 'sitemap.xml exists but does not list this page.' });
 
-      if (!links.checkable) data.checks.push({ id: 'broken-links', label: 'Broken links', status: 'warn', detail: 'Could not check — non-HTTP page.' });
+      if (!links.checkable) data.checks.push({ id: 'broken-links', label: 'Broken links', status: 'warn', detail: 'Could not check, non-HTTP page.' });
       else if (links.broken.length) data.checks.push({ id: 'broken-links', label: 'Broken links', status: 'fail', detail: links.broken.length + ' broken link(s) found (checked ' + links.checked + ').' });
       else if (links.unreachable.length) data.checks.push({ id: 'broken-links', label: 'Broken links', status: 'warn', detail: links.unreachable.length + ' external link(s) unreachable (checked ' + links.checked + ').' });
       else if (links.checked === 0) data.checks.push({ id: 'broken-links', label: 'Broken links', status: 'pass', detail: 'No links to check on this page.' });

@@ -1,4 +1,4 @@
-// SEO Lens panel v0.4.0 — floating bottom-right panel.
+// SEO Lens panel v0.4.0, floating bottom-right panel.
 // Runs as a content script in the page's isolated world (injected after scraper.js).
 // UI lives in a Shadow DOM with constructed stylesheets, so the host page's
 // CSS/CSP can't touch it. Dependency-free: no imports.
@@ -22,7 +22,7 @@
     });
   }
 
-  var root = null;    // shadow root — all queries are scoped to it
+  var root = null;    // shadow root, all queries are scoped to it
   var hostEl = null;
   var lastData = null;
   var fontSheet = null; // document-level @font-face sheet; removed with the panel
@@ -97,7 +97,7 @@
     '    <section id="tab-history" class="tab-panel"></section>' +
     '  </main>' +
     '  <footer>' +
-    '    <span>SEO Lens v0.5.3</span>' +
+    '    <span>SEO Lens v0.5.4</span>' +
     '    <span class="export-btns">' +
     '      <button id="btn-copy" title="Copy report as Markdown">Copy report</button>' +
     '      <button id="btn-download" title="Download report as Markdown file">Download .md</button>' +
@@ -150,7 +150,7 @@
     }
   }
 
-  // ---- "Highlight issues" — reversible visual overlay on the page ----
+  // ---- "Highlight issues", reversible visual overlay on the page ----
   // Only adds outline classes to existing elements (never changes content or
   // layout); everything is removed when toggled off or the panel closes.
   function clearPageMarks() {
@@ -201,7 +201,7 @@
         }
       } catch (e) {}
     });
-    // broken / unreachable links (error) — async results live at data.brokenLinks
+    // broken / unreachable links (error), async results live at data.brokenLinks
     var badUrls = {};
     var bl = lastData && (lastData.brokenLinks || (lastData.links && lastData.links.checkable ? lastData.links : null));
     if (bl) {
@@ -367,7 +367,7 @@
         '<div><div class="label">' + escapeHtml(c.label) + '</div>' +
         '<div class="detail">' + escapeHtml(c.detail) + '</div></div></div>';
     }).join('') +
-      '<div class="note">The score covers stable on-page checks only — performance timings, robots.txt / sitemap.xml, and link availability are reported above for reference and don\'t change the score, so it stays consistent between reloads.</div>';
+      '<div class="note">The score covers stable on-page checks only. Performance timings, robots.txt / sitemap.xml, and link availability are reported above for reference and don\'t change the score, so it stays consistent between reloads.</div>';
   }
 
   function serpCard(s, narrow) {
@@ -382,10 +382,10 @@
   function renderSerp(data) {
     var s = data.serp;
     var warns = '';
-    if (!s.title) warns += '<div class="warn-line">No title — Google will invent one.</div>';
-    else if (s.titleTruncated) warns += '<div class="warn-line">Title is ' + s.titleLen + ' characters — likely truncated in results.</div>';
-    if (!s.description) warns += '<div class="warn-line">No meta description — Google will pick its own snippet.</div>';
-    else if (s.descTruncated) warns += '<div class="warn-line">Description is ' + s.descLen + ' characters — likely truncated.</div>';
+    if (!s.title) warns += '<div class="warn-line">No title, so Google will invent one.</div>';
+    else if (s.titleTruncated) warns += '<div class="warn-line">Title is ' + s.titleLen + ' characters, likely truncated in results.</div>';
+    if (!s.description) warns += '<div class="warn-line">No meta description, so Google will pick its own snippet.</div>';
+    else if (s.descTruncated) warns += '<div class="warn-line">Description is ' + s.descLen + ' characters, likely truncated.</div>';
     el('tab-serp').innerHTML =
       '<div class="section-label">Desktop preview</div>' + serpCard(s, false) +
       '<div class="section-label">Mobile preview</div>' + serpCard(s, true) +
@@ -432,14 +432,14 @@
   }
 
   function fmtBytes(b) {
-    if (b == null) return '—';
+    if (b == null) return 'n/a';
     if (b < 1024) return b + ' B';
     if (b < 1048576) return (b / 1024).toFixed(0) + ' KB';
     return (b / 1048576).toFixed(2) + ' MB';
   }
 
   function fmtSecs(ms) {
-    if (ms == null) return '—';
+    if (ms == null) return 'n/a';
     return (ms / 1000).toFixed(2) + 's';
   }
 
@@ -451,7 +451,7 @@
     }
     var cards = [
       ['LCP', fmtSecs(p.lcp), 'Largest Contentful Paint'],
-      ['CLS', p.cls == null ? '—' : p.cls, 'Cumulative Layout Shift'],
+      ['CLS', p.cls == null ? 'n/a' : p.cls, 'Cumulative Layout Shift'],
       ['TTFB', fmtSecs(p.ttfb), 'Time to First Byte'],
       ['Load', fmtSecs(p.pageLoad), 'Full page load']
     ];
@@ -466,10 +466,10 @@
       kv('DOM ready', fmtSecs(p.domContentLoaded)) +
       kv('Long tasks (>50ms)', p.longTasks) +
       '<div class="psi-row"><div class="section-label">Deep analysis</div>' +
-      '<div class="psi-btns"><button class="copy-btn" id="btn-psi-mobile">PageSpeed Insights — Mobile</button> ' +
-      '<button class="copy-btn" id="btn-psi-desktop">PageSpeed Insights — Desktop</button></div>' +
+      '<div class="psi-btns"><button class="copy-btn" id="btn-psi-mobile">PageSpeed Insights: Mobile</button> ' +
+      '<button class="copy-btn" id="btn-psi-desktop">PageSpeed Insights: Desktop</button></div>' +
       '<div class="note">Opens Google PageSpeed Insights for this exact URL in a new tab.</div></div>' +
-      '<div class="note">Transfer size excludes cross-origin resources without timing permission — treat as a lower bound.</div>';
+      '<div class="note">Transfer size excludes cross-origin resources without timing permission, treat as a lower bound.</div>';
     qsa('#btn-psi-mobile, #btn-psi-desktop').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var ff = btn.id === 'btn-psi-mobile' ? 'mobile' : 'desktop';
@@ -569,7 +569,7 @@
       if (bl.unreachable.length) {
         html += '<div class="section-label">Unreachable external links</div>' +
           bl.unreachable.map(function (b) { return '<div class="alt-row mono">✗ ' + escapeHtml(b.url) + '</div>'; }).join('') +
-          '<div class="note">External checks are reachability-only — browsers hide cross-origin status codes.</div>';
+          '<div class="note">External checks are reachability-only, browsers hide cross-origin status codes.</div>';
       }
     }
     el('tab-links').innerHTML = html;
@@ -578,10 +578,10 @@
   function renderSocial(data) {
     var og = data.og || {};
     el('tab-social').innerHTML =
-      kv('og:title', og['og:title'] || '—') +
-      kv('og:description', og['og:description'] || '—') +
-      kv('og:image', og['og:image'] || '—') +
-      kv('twitter:card', data.twitterCard || '—');
+      kv('og:title', og['og:title'] || 'n/a') +
+      kv('og:description', og['og:description'] || 'n/a') +
+      kv('og:image', og['og:image'] || 'n/a') +
+      kv('twitter:card', data.twitterCard || 'n/a');
   }
 
   function renderSchema(data) {
@@ -597,7 +597,7 @@
     if (crawl.robots && crawl.robots.checkable) {
       html += '<div class="section-label">robots.txt</div>' +
         kv('Exists', crawl.robots.exists ? 'Yes' : 'No') +
-        (crawl.robots.exists ? kv('This page blocked', crawl.robots.blocked ? 'Yes — fix urgently!' : 'No') : '');
+        (crawl.robots.exists ? kv('This page blocked', crawl.robots.blocked ? 'Yes, fix urgently!' : 'No') : '');
     }
     if (crawl.sitemap && crawl.sitemap.checkable) {
       html += '<div class="section-label">sitemap.xml</div>' +
@@ -674,7 +674,7 @@
   function sparkline(entries) {
     var W = 320, H = 60, PAD = 8;
     if (entries.length < 2) {
-      return '<div class="note">Not enough scans yet — run the extension again later to build a trend.</div>';
+      return '<div class="note">Not enough scans yet, run the extension again later to build a trend.</div>';
     }
     var scores = entries.map(function (e) { return e.s; });
     var lo = Math.max(0, Math.min.apply(null, scores) - 5);
@@ -708,7 +708,7 @@
       var ordered = list.slice().reverse(); // newest first
       var rows = ordered.map(function (e, i) {
         var prev = ordered[i + 1];
-        var dHtml = '<span class="delta">—</span>';
+        var dHtml = '<span class="delta">·</span>';
         if (prev) {
           var d = e.s - prev.s;
           dHtml = d > 0 ? '<span class="delta up">+' + d + '</span>'
@@ -723,12 +723,12 @@
           e.pass + '✓ ' + e.warn + '⚠ ' + e.fail + '✗</span></div>';
       }).join('');
       sec.innerHTML =
-        '<div class="section-label">Score trend — this page</div>' +
+        '<div class="section-label">Score trend, this page</div>' +
         sparkline(list.slice(-20)) +
         '<div class="section-label">Scans (' + list.length + ')</div>' +
         '<div class="hist-list">' + rows + '</div>' +
         '<button class="copy-btn" id="btn-clear-history">Clear history for this page</button>' +
-        '<div class="note">Stored only on this device — nothing leaves your browser.</div>';
+        '<div class="note">Stored only on this device, nothing leaves your browser.</div>';
       el('btn-clear-history').addEventListener('click', function () {
         loadHistory(function (hh) {
           delete hh[historyUrl()];
@@ -789,7 +789,7 @@
     if (p && p.measurable) {
       L.push('## Performance');
       L.push('');
-      L.push('- LCP: ' + fmtSecs(p.lcp) + ', CLS: ' + (p.cls == null ? '—' : p.cls) +
+      L.push('- LCP: ' + fmtSecs(p.lcp) + ', CLS: ' + (p.cls == null ? 'n/a' : p.cls) +
         ', TTFB: ' + fmtSecs(p.ttfb) + ', Load: ' + fmtSecs(p.pageLoad));
       L.push('- Transferred: ' + fmtBytes(p.bytes) + ' across ' + p.requests + ' requests');
       L.push('');
@@ -815,7 +815,7 @@
         L.push('');
       });
     }
-    L.push('_Generated by SEO Lens v0.5.3_');
+    L.push('_Generated by SEO Lens v0.5.4_');
     return L.join('\n');
   }
 

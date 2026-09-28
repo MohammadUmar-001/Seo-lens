@@ -1,4 +1,4 @@
-// SEO Lens — service worker.
+// SEO Lens service worker.
 // The toolbar icon has no popup; clicking it injects the scraper + floating
 // panel into the active tab. Clicking again toggles the panel closed.
 chrome.action.onClicked.addListener(async (tab) => {
